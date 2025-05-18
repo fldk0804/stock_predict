@@ -52,5 +52,6 @@
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.0"
-  }
+  },
+  "homepage": "https://fldk0804.github.io/stock_predict"
 }
