@@ -1,0 +1,12 @@
+{
+  "files": {
+    "main.css": "/stock_predict/static/css/main.1132e673.css",
+    "main.js": "/stock_predict/static/js/main.2253fad4.js",
+    "static/js/206.8ac086ca.chunk.js": "/stock_predict/static/js/206.8ac086ca.chunk.js",
+    "index.html": "/stock_predict/index.html"
+  },
+  "entrypoints": [
+    "static/css/main.1132e673.css",
+    "static/js/main.2253fad4.js"
+  ]
+}
