@@ -39,18 +39,6 @@ interface StockSuggestion {
   exchange: string;
 }
 
-interface StockNews {
-  title: string;
-  summary: string;
-  url: string;
-  publishedDate: string;
-}
-
-interface StockKnowledge {
-  category: string;
-  points: string[];
-}
-
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<StockSuggestion[]>([]);
