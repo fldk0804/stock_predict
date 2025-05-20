@@ -1,3 +1,7 @@
+body {
+  background: #ef4444;
+}
+
 .App {
   text-align: center;
 }
@@ -32,7 +36,49 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
+  }
+}
+
+.animated-water-bg {
+  background: #00ff00 !important;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+@keyframes waterMove {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.water-animated-bg {
+  background: linear-gradient(120deg, #2563eb 0%, #ffffff 80%, #2563eb 100%);
+  background-size: 300% 300%;
+  animation: waterMove 1s linear infinite;
+}
+
+@keyframes waterMove {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
   }
 }

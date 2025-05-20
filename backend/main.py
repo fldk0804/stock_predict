@@ -10,9 +10,9 @@ import random
 from collections import defaultdict
 import functools
 import asyncio
-
-# Configure yfinance
-yf.pdr_override()
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
 
 app = FastAPI()
 
@@ -502,4 +502,71 @@ async def get_stock_news(symbol: str):
         raise HTTPException(status_code=503, detail="Service temporarily unavailable")
     except Exception as e:
         print(f"Error in get_stock_news: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error") 
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/stock/{symbol}/predict")
+async def predict_stock(symbol: str, days: int = 30):
+    """Predict stock prices for the next specified number of days."""
+    try:
+        # Check rate limiting
+        if is_rate_limited('history'):
+            return {"error": "Rate limit exceeded. Please try again later."}
+
+        # Check cache
+        cache_key = f"{symbol}_predict_{days}"
+        cached_data = get_cached_data('history', cache_key)
+        if cached_data:
+            return cached_data
+
+        # Get historical data for training
+        stock = yf.Ticker(symbol)
+        hist = stock.history(period="1y")
+        
+        if hist.empty:
+            raise HTTPException(status_code=404, detail="No historical data found")
+
+        # Prepare data for prediction
+        X = np.arange(len(hist)).reshape(-1, 1)
+        y = hist['Close'].values
+        
+        # Scale the data
+        scaler_X = StandardScaler()
+        scaler_y = StandardScaler()
+        
+        X_scaled = scaler_X.fit_transform(X)
+        y_scaled = scaler_y.fit_transform(y.reshape(-1, 1)).ravel()
+
+        # Train the model
+        model = LinearRegression()
+        model.fit(X_scaled, y_scaled)
+
+        # Generate future dates for prediction
+        future_dates = [hist.index[-1] + timedelta(days=x) for x in range(1, days + 1)]
+        future_X = np.arange(len(hist), len(hist) + days).reshape(-1, 1)
+        future_X_scaled = scaler_X.transform(future_X)
+
+        # Make predictions
+        predictions_scaled = model.predict(future_X_scaled)
+        predictions = scaler_y.inverse_transform(predictions_scaled.reshape(-1, 1)).ravel()
+
+        # Calculate confidence intervals (simple approach)
+        std_dev = np.std(hist['Close'].values)
+        confidence_interval = 1.96 * std_dev  # 95% confidence interval
+
+        # Prepare response
+        prediction_data = {
+            "dates": [d.strftime("%Y-%m-%d") for d in future_dates],
+            "predictions": predictions.tolist(),
+            "upper_bound": (predictions + confidence_interval).tolist(),
+            "lower_bound": (predictions - confidence_interval).tolist(),
+            "last_actual": float(hist['Close'].iloc[-1]),
+            "last_actual_date": hist.index[-1].strftime("%Y-%m-%d")
+        }
+
+        # Cache the results
+        set_cached_data('history', cache_key, prediction_data)
+
+        return prediction_data
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 
