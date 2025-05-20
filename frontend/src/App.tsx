@@ -12,6 +12,7 @@ import {
   Legend
 } from 'chart.js';
 import StockNews from './components/StockNews';
+import { config } from './config';
 
 ChartJS.register(
   CategoryScale,
@@ -77,7 +78,7 @@ function App() {
     try {
       setLoading(true);
       setError('');
-      const response = await axios.get(`http://localhost:8000/search/${query}`);
+      const response = await axios.get(`${config.API_BASE_URL}/search/${query}`);
       if (response.data.error) {
         setError(response.data.error);
         setSuggestions([]);
@@ -133,8 +134,8 @@ function App() {
       setLoading(true);
       setError('');
       const [stockResponse, historyResponse] = await Promise.all([
-        axios.get(`http://localhost:8000/stock/${symbol}`),
-        axios.get(`http://localhost:8000/stock/${symbol}/history`)
+        axios.get(`${config.API_BASE_URL}/stock/${symbol}`),
+        axios.get(`${config.API_BASE_URL}/stock/${symbol}/history`)
       ]);
 
       setSelectedStock(stockResponse.data);

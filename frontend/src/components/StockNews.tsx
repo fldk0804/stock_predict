@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { format, parseISO } from 'date-fns';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ChartData, ChartOptions } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { config } from '../config';
 
 ChartJS.register(
     CategoryScale,
@@ -93,7 +94,7 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
             setError(null);
 
             try {
-                const response = await fetch(`http://localhost:8000/stock/${symbol}/news`);
+                const response = await fetch(`${config.API_BASE_URL}/stock/${symbol}/news`);
                 if (!response.ok) {
                     throw new Error(response.statusText || 'Failed to fetch news');
                 }
@@ -120,7 +121,7 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
 
             try {
                 const period = zoomLevel === 'all' ? 'max' : zoomLevel;
-                const response = await fetch(`http://localhost:8000/stock/${symbol}/history?period=${period}`);
+                const response = await fetch(`${config.API_BASE_URL}/stock/${symbol}/history?period=${period}`);
 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -152,7 +153,7 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
             setError(null);
 
             try {
-                const response = await fetch(`http://localhost:8000/stock/${symbol}/predict`);
+                const response = await fetch(`${config.API_BASE_URL}/stock/${symbol}/predict`);
                 if (!response.ok) {
                     throw new Error(response.statusText || 'Failed to fetch predictions');
                 }
