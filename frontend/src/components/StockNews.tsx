@@ -70,7 +70,6 @@ Math.std = function (array: number[]) {
 
 const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
     const [news, setNews] = useState<NewsItem[]>([]);
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showAllNews, setShowAllNews] = useState(false);
     const [selectedEducation, setSelectedEducation] = useState<EducationResource | null>(null);
@@ -91,7 +90,6 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
         const fetchNews = async () => {
             if (!symbol) return;
 
-            setLoading(true);
             setError(null);
 
             try {
@@ -105,8 +103,6 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to fetch news');
                 console.error('Error fetching news:', err);
-            } finally {
-                setLoading(false);
             }
         };
 
@@ -175,62 +171,6 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
 
         fetchPredictions();
     }, [symbol]);
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        if (e.touches.length === 2) {
-            e.preventDefault(); // Prevent default zoom behavior
-            const distance = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-            setTouchStartDistance(distance);
-            setIsZooming(true);
-        }
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (isZooming && e.touches.length === 2 && touchStartDistance) {
-            e.preventDefault(); // Prevent default zoom behavior
-            const currentDistance = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-
-            const zoomDelta = currentDistance - touchStartDistance;
-            const ZOOM_SENSITIVITY = 50; // Reduced sensitivity for better control
-
-            if (Math.abs(zoomDelta) > ZOOM_SENSITIVITY) {
-                // Pinch in = see longer history (zoom out)
-                if (zoomDelta < 0) {
-                    setZoomLevel(prev => {
-                        switch (prev) {
-                            case '1y': return '5y';
-                            case '5y': return '10y';
-                            case '10y': return 'all';
-                            default: return prev;
-                        }
-                    });
-                }
-                // Pinch out = see recent history (zoom in)
-                else {
-                    setZoomLevel(prev => {
-                        switch (prev) {
-                            case 'all': return '10y';
-                            case '10y': return '5y';
-                            case '5y': return '1y';
-                            default: return prev;
-                        }
-                    });
-                }
-                setTouchStartDistance(currentDistance);
-            }
-        }
-    };
-
-    const handleTouchEnd = () => {
-        setIsZooming(false);
-        setTouchStartDistance(null);
-    };
 
     const getFilteredHistoryData = () => {
         if (!historyData.length) return [];

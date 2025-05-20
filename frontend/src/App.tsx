@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -62,12 +61,9 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<StockSuggestion[]>([]);
   const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
-  const [stockHistory, setStockHistory] = useState<StockHistory | null>(null);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-  const [isEducationExpanded, setIsEducationExpanded] = useState(false);
-  const [stockKnowledge, setStockKnowledge] = useState<StockKnowledge[]>([]);
 
   const fetchSuggestions = useCallback(async (query: string) => {
     if (!query || query.length < 1) {
@@ -139,7 +135,6 @@ function App() {
       ]);
 
       setSelectedStock(stockResponse.data);
-      setStockHistory(historyResponse.data);
       setSuggestions([]);
       setSearchTerm('');
     } catch (err) {
@@ -177,14 +172,6 @@ function App() {
     };
     return knowledge[symbol] || [];
   };
-
-  // Update education content when stock is selected
-  useEffect(() => {
-    if (selectedStock) {
-      // Set stock knowledge
-      setStockKnowledge(getStockKnowledge(selectedStock.symbol));
-    }
-  }, [selectedStock]);
 
   useEffect(() => {
     return () => {
