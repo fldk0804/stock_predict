@@ -348,6 +348,13 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
         };
     };
 
+    const getErrorMessage = (error: string) => {
+        if (error.includes("premium")) {
+            return "Premium Data Required - Please try again in a few minutes or try a different stock symbol.";
+        }
+        return error;
+    };
+
     return (
         <div className="flex flex-col min-h-screen">
             <div className="flex flex-col lg:flex-row flex-1 justify-center">
@@ -480,15 +487,7 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
                         {predictionError ? (
                             <div className="text-center py-8">
                                 <div className="text-red-500 mb-4">
-                                    {predictionError.includes("premium") ? (
-                                        <div className="space-y-4">
-                                            <p className="text-lg font-semibold">Premium Data Required</p>
-                                            <p className="text-gray-600">We're currently experiencing high demand for stock predictions.</p>
-                                            <p className="text-gray-600">Please try again in a few minutes or try a different stock symbol.</p>
-                                        </div>
-                                    ) : (
-                                        predictionError
-                                    )}
+                                    {getErrorMessage(predictionError)}
                                 </div>
                             </div>
                         ) : predictionData ? (
@@ -561,7 +560,7 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
                                         This analysis should not be considered as financial advice. Always conduct your own research and consult with financial professionals before making investment decisions.</p>
                                 </div>
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             )}

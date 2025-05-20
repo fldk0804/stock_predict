@@ -204,8 +204,8 @@ function App() {
         )}
         {/* Search Section */}
         {selectedStock && (
-          <div className="mb-8 flex flex-col items-center">
-            <div className="bg-white rounded-xl shadow px-16 py-6 w-[250%] max-w-7xl mx-auto mt-8 flex flex-col items-center justify-center">
+          <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+            <div className="bg-white rounded-xl shadow px-4 sm:px-8 py-6 w-full max-w-2xl mx-auto mt-8 flex flex-col items-center justify-center">
               <input
                 type="text"
                 value={searchTerm}
@@ -214,7 +214,7 @@ function App() {
                 className="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {suggestions.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+                <div className="absolute z-10 w-full max-w-2xl mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
                   {suggestions.map((suggestion, index) => (
                     <button
                       key={index}
