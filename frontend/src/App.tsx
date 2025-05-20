@@ -33,12 +33,6 @@ interface StockData {
   currency: string;
 }
 
-interface StockHistory {
-  dates: string[];
-  prices: number[];
-  volumes: number[];
-}
-
 interface StockSuggestion {
   symbol: string;
   name: string;
@@ -129,10 +123,7 @@ function App() {
     try {
       setLoading(true);
       setError('');
-      const [stockResponse, historyResponse] = await Promise.all([
-        axios.get(`${config.API_BASE_URL}/stock/${symbol}`),
-        axios.get(`${config.API_BASE_URL}/stock/${symbol}/history`)
-      ]);
+      const stockResponse = await axios.get(`${config.API_BASE_URL}/stock/${symbol}`);
 
       setSelectedStock(stockResponse.data);
       setSuggestions([]);
@@ -143,34 +134,6 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Mock function to get stock-specific knowledge (replace with real API call)
-  const getStockKnowledge = (symbol: string) => {
-    const knowledge: { [key: string]: StockKnowledge[] } = {
-      'TSLA': [
-        {
-          category: 'Company Fundamentals',
-          points: [
-            'Tesla is a leader in electric vehicle manufacturing',
-            'Strong focus on autonomous driving technology',
-            'Expanding into energy storage and solar power',
-            'High reliance on regulatory credits for profitability'
-          ]
-        },
-        {
-          category: 'Market Factors',
-          points: [
-            'Stock price sensitive to CEO Elon Musk\'s public statements',
-            'Competition increasing in EV market',
-            'Global supply chain challenges affect production',
-            'Battery technology advances crucial for growth'
-          ]
-        }
-      ],
-      // Add more stocks here
-    };
-    return knowledge[symbol] || [];
   };
 
   useEffect(() => {

@@ -71,7 +71,6 @@ Math.std = function (array: number[]) {
 const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
     const [news, setNews] = useState<NewsItem[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [showAllNews, setShowAllNews] = useState(false);
     const [selectedEducation, setSelectedEducation] = useState<EducationResource | null>(null);
     const [historyData, setHistoryData] = useState<StockHistoryData[]>([]);
     const [zoomLevel, setZoomLevel] = useState<'all' | '10y' | '5y' | '1y'>('1y');
@@ -79,12 +78,8 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
     const [isNewsExpanded, setIsNewsExpanded] = useState(false);
     const [isEducationExpanded, setIsEducationExpanded] = useState(false);
     const chartRef = useRef<ChartJS<"line">>(null);
-    const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
-    const [isZooming, setIsZooming] = useState(false);
-    const chartContainerRef = useRef<HTMLDivElement>(null);
     const [predictionData, setPredictionData] = useState<PredictionData | null>(null);
     const [predictionError, setPredictionError] = useState<string | null>(null);
-    const [showAnalysis, setShowAnalysis] = useState(false);
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -194,8 +189,6 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
 
         return historyData.filter(item => new Date(item.date) >= cutoffDate);
     };
-
-    const displayedNews = showAllNews ? news : news.slice(0, 3);
 
     const educationContent: EducationResource[] = [
         {
@@ -427,7 +420,7 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
                             </button>
                         </div>
                         <div className="space-y-4 max-h-[300px] overflow-y-auto">
-                            {displayedNews.map((item, index) => (
+                            {news.slice(0, 3).map((item, index) => (
                                 <div key={`news-${index}`} className="border-b pb-4">
                                     <a
                                         href={item.link}
