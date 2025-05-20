@@ -350,13 +350,13 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <div className="flex flex-1 justify-center">
+            <div className="flex flex-col lg:flex-row flex-1 justify-center">
                 {/* Main Chart Section (centered, reduced width) */}
-                <div className="w-2/3 max-w-3xl p-4">
+                <div className="w-full lg:w-2/3 p-4">
                     <div className="bg-white rounded-lg shadow h-full p-4">
-                        <div className="flex justify-between items-center p-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-center p-4 space-y-4 sm:space-y-0">
                             <h2 className="text-xl font-bold">Price History</h2>
-                            <div className="flex space-x-2">
+                            <div className="flex flex-wrap gap-2">
                                 <button
                                     onClick={() => setZoomLevel('1y')}
                                     className={`px-3 py-1 rounded ${zoomLevel === '1y' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
@@ -383,7 +383,7 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
                                 </button>
                             </div>
                         </div>
-                        <div className="h-[calc(100%-5rem)] relative">
+                        <div className="h-[400px] sm:h-[500px] relative">
                             {error && (
                                 <div className="flex items-center justify-center h-full text-red-500">
                                     {error}
@@ -406,8 +406,8 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
                     </div>
                 </div>
 
-                {/* Sidebar Section (1/4 width) */}
-                <div className="w-1/4 p-4 space-y-4">
+                {/* Sidebar Section */}
+                <div className="w-full lg:w-1/4 p-4 space-y-4">
                     {/* Latest News Section */}
                     <div className="bg-white rounded-lg shadow p-4">
                         <div className="flex justify-between items-center mb-4">
@@ -428,8 +428,8 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
                                         rel="noopener noreferrer"
                                         className="hover:text-blue-600 transition-colors"
                                     >
-                                        <h3 className="font-semibold">{item.title}</h3>
-                                        <div className="flex justify-between text-sm text-gray-600">
+                                        <h3 className="font-semibold text-sm sm:text-base">{item.title}</h3>
+                                        <div className="flex flex-col sm:flex-row sm:justify-between text-xs sm:text-sm text-gray-600 mt-1">
                                             <span>{item.publisher}</span>
                                             <span>{format(new Date(item.published_at * 1000), 'MMM dd, yyyy')}</span>
                                         </div>
@@ -471,44 +471,53 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
                 </div>
             </div>
 
-            {/* New Analysis Section */}
             {(predictionData || predictionError) && (
-                <div className="w-full px-8 pb-8 flex justify-center">
+                <div className="w-full px-4 sm:px-8 pb-8 flex justify-center">
                     <div className="bg-white rounded-lg shadow p-4 w-full max-w-5xl">
                         <div className="mb-4">
                             <h2 className="text-xl font-bold">Market Analysis & Prediction Insights</h2>
                         </div>
                         {predictionError ? (
-                            <div className="text-red-500 text-center py-8">
-                                {predictionError}
+                            <div className="text-center py-8">
+                                <div className="text-red-500 mb-4">
+                                    {predictionError.includes("premium") ? (
+                                        <div className="space-y-4">
+                                            <p className="text-lg font-semibold">Premium Data Required</p>
+                                            <p className="text-gray-600">We're currently experiencing high demand for stock predictions.</p>
+                                            <p className="text-gray-600">Please try again in a few minutes or try a different stock symbol.</p>
+                                        </div>
+                                    ) : (
+                                        predictionError
+                                    )}
+                                </div>
                             </div>
                         ) : predictionData ? (
                             <div className="space-y-6">
                                 {/* Market Sentiment */}
-                                <div className="flex items-center justify-between border-b pb-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b pb-4">
                                     <div>
                                         <h3 className="font-semibold text-lg mb-1">Market Sentiment</h3>
                                         <p className="text-gray-600">
                                             {getMarketSentiment(predictionData.predictions, predictionData.last_actual)}
                                         </p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="mt-4 sm:mt-0 text-left sm:text-right">
                                         <p className="text-sm text-gray-500">Last Price</p>
                                         <p className="font-semibold">${predictionData.last_actual.toFixed(2)}</p>
                                     </div>
                                 </div>
                                 {/* Prediction Analysis */}
-                                <div className="grid grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                                     <div className="border rounded-lg p-4">
                                         <h4 className="font-semibold mb-2">Price Trend</h4>
-                                        <p className="text-gray-600">
+                                        <p className="text-gray-600 text-sm sm:text-base">
                                             The model predicts a {getMarketFactors(predictionData.predictions, predictionData.last_actual).trend} trend
                                             over the next 30 days, based on historical patterns and current market conditions.
                                         </p>
                                     </div>
                                     <div className="border rounded-lg p-4">
                                         <h4 className="font-semibold mb-2">Volatility Assessment</h4>
-                                        <p className="text-gray-600">
+                                        <p className="text-gray-600 text-sm sm:text-base">
                                             Expected volatility is {getMarketFactors(predictionData.predictions, predictionData.last_actual).volatility}.
                                             This is reflected in the confidence interval shown in the chart.
                                         </p>
@@ -552,15 +561,15 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
                                         This analysis should not be considered as financial advice. Always conduct your own research and consult with financial professionals before making investment decisions.</p>
                                 </div>
                             </div>
-                        ) : null}
+                        )}
                     </div>
                 </div>
             )}
 
             {/* News Expanded Modal */}
             {isNewsExpanded && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-3/4 h-3/4 p-6 relative overflow-hidden">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg w-full max-w-4xl h-[80vh] p-4 sm:p-6 relative overflow-hidden">
                         <button
                             onClick={() => setIsNewsExpanded(false)}
                             className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
