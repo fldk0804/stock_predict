@@ -84,6 +84,7 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
     const [isZooming, setIsZooming] = useState(false);
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const [predictionData, setPredictionData] = useState<PredictionData | null>(null);
+    const [predictionError, setPredictionError] = useState<string | null>(null);
     const [showAnalysis, setShowAnalysis] = useState(false);
 
     useEffect(() => {
@@ -150,17 +151,22 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
             if (!symbol) return;
 
             setIsLoading(true);
-            setError(null);
+            setPredictionError(null);
 
             try {
                 const response = await fetch(`${config.API_BASE_URL}/stock/${symbol}/predict`);
                 if (!response.ok) {
-                    throw new Error(response.statusText || 'Failed to fetch predictions');
+                    const errorData = await response.json();
+                    setPredictionError(errorData.detail || 'Failed to fetch predictions');
+                    setPredictionData(null);
+                    return;
                 }
 
                 const data = await response.json();
                 setPredictionData(data);
             } catch (err) {
+                setPredictionError('Failed to fetch predictions. Please try again.');
+                setPredictionData(null);
                 console.error('Error fetching predictions:', err);
             } finally {
                 setIsLoading(false);
@@ -533,81 +539,87 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
             </div>
 
             {/* New Analysis Section */}
-            {predictionData && (
+            {(predictionData || predictionError) && (
                 <div className="w-full px-8 pb-8 flex justify-center">
                     <div className="bg-white rounded-lg shadow p-4 w-full max-w-5xl">
                         <div className="mb-4">
                             <h2 className="text-xl font-bold">Market Analysis & Prediction Insights</h2>
                         </div>
-                        <div className="space-y-6">
-                            {/* Market Sentiment */}
-                            <div className="flex items-center justify-between border-b pb-4">
-                                <div>
-                                    <h3 className="font-semibold text-lg mb-1">Market Sentiment</h3>
-                                    <p className="text-gray-600">
-                                        {getMarketSentiment(predictionData.predictions, predictionData.last_actual)}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm text-gray-500">Last Price</p>
-                                    <p className="font-semibold">${predictionData.last_actual.toFixed(2)}</p>
-                                </div>
+                        {predictionError ? (
+                            <div className="text-red-500 text-center py-8">
+                                {predictionError}
                             </div>
-                            {/* Prediction Analysis */}
-                            <div className="grid grid-cols-3 gap-6">
-                                <div className="border rounded-lg p-4">
-                                    <h4 className="font-semibold mb-2">Price Trend</h4>
-                                    <p className="text-gray-600">
-                                        The model predicts a {getMarketFactors(predictionData.predictions, predictionData.last_actual).trend} trend
-                                        over the next 30 days, based on historical patterns and current market conditions.
-                                    </p>
-                                </div>
-                                <div className="border rounded-lg p-4">
-                                    <h4 className="font-semibold mb-2">Volatility Assessment</h4>
-                                    <p className="text-gray-600">
-                                        Expected volatility is {getMarketFactors(predictionData.predictions, predictionData.last_actual).volatility}.
-                                        This is reflected in the confidence interval shown in the chart.
-                                    </p>
-                                </div>
-                                <div className="border rounded-lg p-4">
-                                    <h4 className="font-semibold mb-2">Prediction Confidence</h4>
-                                    <div className="flex items-center">
-                                        <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
-                                            <div
-                                                className="bg-blue-600 h-2 rounded-full"
-                                                style={{ width: `${getMarketFactors(predictionData.predictions, predictionData.last_actual).confidence}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-sm text-gray-600">
-                                            {getMarketFactors(predictionData.predictions, predictionData.last_actual).confidence.toFixed(1)}%
-                                        </span>
+                        ) : predictionData ? (
+                            <div className="space-y-6">
+                                {/* Market Sentiment */}
+                                <div className="flex items-center justify-between border-b pb-4">
+                                    <div>
+                                        <h3 className="font-semibold text-lg mb-1">Market Sentiment</h3>
+                                        <p className="text-gray-600">
+                                            {getMarketSentiment(predictionData.predictions, predictionData.last_actual)}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-gray-500">Last Price</p>
+                                        <p className="font-semibold">${predictionData.last_actual.toFixed(2)}</p>
                                     </div>
                                 </div>
+                                {/* Prediction Analysis */}
+                                <div className="grid grid-cols-3 gap-6">
+                                    <div className="border rounded-lg p-4">
+                                        <h4 className="font-semibold mb-2">Price Trend</h4>
+                                        <p className="text-gray-600">
+                                            The model predicts a {getMarketFactors(predictionData.predictions, predictionData.last_actual).trend} trend
+                                            over the next 30 days, based on historical patterns and current market conditions.
+                                        </p>
+                                    </div>
+                                    <div className="border rounded-lg p-4">
+                                        <h4 className="font-semibold mb-2">Volatility Assessment</h4>
+                                        <p className="text-gray-600">
+                                            Expected volatility is {getMarketFactors(predictionData.predictions, predictionData.last_actual).volatility}.
+                                            This is reflected in the confidence interval shown in the chart.
+                                        </p>
+                                    </div>
+                                    <div className="border rounded-lg p-4">
+                                        <h4 className="font-semibold mb-2">Prediction Confidence</h4>
+                                        <div className="flex items-center">
+                                            <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                                                <div
+                                                    className="bg-blue-600 h-2 rounded-full"
+                                                    style={{ width: `${getMarketFactors(predictionData.predictions, predictionData.last_actual).confidence}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-sm text-gray-600">
+                                                {getMarketFactors(predictionData.predictions, predictionData.last_actual).confidence.toFixed(1)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Key Factors */}
+                                <div>
+                                    <h3 className="font-semibold text-lg mb-3">Key Influencing Factors</h3>
+                                    <ul className="list-disc pl-5 space-y-2 text-gray-600">
+                                        <li>Historical price patterns and trends over the past year</li>
+                                        <li>Market volatility and standard deviation of price movements</li>
+                                        <li>Current market momentum and trend direction</li>
+                                        <li>Note: This prediction model uses linear regression and does not account for external factors such as:
+                                            <ul className="list-circle pl-5 mt-2 space-y-1">
+                                                <li>Company-specific news and events</li>
+                                                <li>Overall market conditions and economic indicators</li>
+                                                <li>Industry trends and competitive landscape</li>
+                                                <li>Global economic and political events</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                                {/* Disclaimer */}
+                                <div className="mt-6 text-sm text-gray-500 bg-gray-50 p-4 rounded">
+                                    <p><strong>Disclaimer:</strong> This prediction is based on historical data analysis and mathematical models.
+                                        Financial markets are inherently unpredictable and subject to numerous external factors.
+                                        This analysis should not be considered as financial advice. Always conduct your own research and consult with financial professionals before making investment decisions.</p>
+                                </div>
                             </div>
-                            {/* Key Factors */}
-                            <div>
-                                <h3 className="font-semibold text-lg mb-3">Key Influencing Factors</h3>
-                                <ul className="list-disc pl-5 space-y-2 text-gray-600">
-                                    <li>Historical price patterns and trends over the past year</li>
-                                    <li>Market volatility and standard deviation of price movements</li>
-                                    <li>Current market momentum and trend direction</li>
-                                    <li>Note: This prediction model uses linear regression and does not account for external factors such as:
-                                        <ul className="list-circle pl-5 mt-2 space-y-1">
-                                            <li>Company-specific news and events</li>
-                                            <li>Overall market conditions and economic indicators</li>
-                                            <li>Industry trends and competitive landscape</li>
-                                            <li>Global economic and political events</li>
-                                        </ul>
-                                    </li>
-                                </ul>
-                            </div>
-                            {/* Disclaimer */}
-                            <div className="mt-6 text-sm text-gray-500 bg-gray-50 p-4 rounded">
-                                <p><strong>Disclaimer:</strong> This prediction is based on historical data analysis and mathematical models.
-                                    Financial markets are inherently unpredictable and subject to numerous external factors.
-                                    This analysis should not be considered as financial advice. Always conduct your own research and consult with financial professionals before making investment decisions.</p>
-                            </div>
-                        </div>
+                        ) : null}
                     </div>
                 </div>
             )}
