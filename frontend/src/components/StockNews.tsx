@@ -390,7 +390,7 @@ const StockNews: React.FC<StockNewsProps> = ({ symbol, stockName }) => {
                                 </button>
                             </div>
                         </div>
-                        <div className="h-[400px] sm:h-[500px] relative">
+                        <div className="h-[400px] sm:h-[500px] relative flex items-center justify-center">
                             {error && (
                                 <div className="flex items-center justify-center h-full text-red-500">
                                     {error}
