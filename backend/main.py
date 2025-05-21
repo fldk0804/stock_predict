@@ -14,6 +14,8 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 
+ALPHAVANTAGE_API_KEY = "2KZILX67A047KSJ4"
+
 app = FastAPI()
 
 # Add CORS middleware
@@ -506,67 +508,82 @@ async def get_stock_news(symbol: str):
 
 @app.get("/stock/{symbol}/predict")
 async def predict_stock(symbol: str, days: int = 30):
-    """Predict stock prices for the next specified number of days."""
     try:
-        # Check rate limiting
         if is_rate_limited('history'):
             return {"error": "Rate limit exceeded. Please try again later."}
 
-        # Check cache
         cache_key = f"{symbol}_predict_{days}"
         cached_data = get_cached_data('history', cache_key)
         if cached_data:
             return cached_data
 
-        # Get historical data for training
-        stock = yf.Ticker(symbol)
-        hist = stock.history(period="1y")
+        # Fetch historical data from Alpha Vantage
+        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}&outputsize=full&apikey={ALPHAVANTAGE_API_KEY}"
+        response = requests.get(url)
+        data = response.json()
         
-        if hist.empty:
-            raise HTTPException(status_code=404, detail="No historical data found")
-
-        # Prepare data for prediction
-        X = np.arange(len(hist)).reshape(-1, 1)
-        y = hist['Close'].values
-        
-        # Scale the data
+        # Check for premium endpoint error
+        if "Information" in data and "premium" in data["Information"].lower():
+            raise HTTPException(
+                status_code=403,
+                detail="This endpoint requires a premium Alpha Vantage subscription. Please try again later or contact support."
+            )
+            
+        if "Time Series (Daily)" not in data:
+            print(f"Alpha Vantage raw response for {symbol}: {data}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"No sufficient historical data found for {symbol}. Please try another stock or later."
+            )
+            
+        ts = data["Time Series (Daily)"]
+        # Sort by date ascending
+        sorted_dates = sorted(ts.keys())
+        closes = [float(ts[date]["4. close"]) for date in sorted_dates]
+        dates = [date for date in sorted_dates]
+        if len(closes) < 5:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No sufficient historical data found for {symbol}. Please try another stock or later."
+            )
+        # Use only the last 365 days if available
+        closes = closes[-365:]
+        dates = dates[-365:]
+        X = np.arange(len(closes)).reshape(-1, 1)
+        y = np.array(closes)
         scaler_X = StandardScaler()
         scaler_y = StandardScaler()
-        
         X_scaled = scaler_X.fit_transform(X)
         y_scaled = scaler_y.fit_transform(y.reshape(-1, 1)).ravel()
-
-        # Train the model
         model = LinearRegression()
         model.fit(X_scaled, y_scaled)
-
-        # Generate future dates for prediction
-        future_dates = [hist.index[-1] + timedelta(days=x) for x in range(1, days + 1)]
-        future_X = np.arange(len(hist), len(hist) + days).reshape(-1, 1)
+        future_X = np.arange(len(closes), len(closes) + days).reshape(-1, 1)
         future_X_scaled = scaler_X.transform(future_X)
-
-        # Make predictions
         predictions_scaled = model.predict(future_X_scaled)
         predictions = scaler_y.inverse_transform(predictions_scaled.reshape(-1, 1)).ravel()
-
-        # Calculate confidence intervals (simple approach)
-        std_dev = np.std(hist['Close'].values)
-        confidence_interval = 1.96 * std_dev  # 95% confidence interval
-
-        # Prepare response
+        std_dev = np.std(y)
+        confidence_interval = 1.96 * std_dev
+        last_actual = closes[-1]
+        last_actual_date = dates[-1]
+        # Generate future dates (skip weekends)
+        future_dates = []
+        last_date = datetime.strptime(last_actual_date, "%Y-%m-%d")
+        while len(future_dates) < days:
+            last_date += timedelta(days=1)
+            if last_date.weekday() < 5:  # Monday-Friday
+                future_dates.append(last_date.strftime("%Y-%m-%d"))
         prediction_data = {
-            "dates": [d.strftime("%Y-%m-%d") for d in future_dates],
+            "dates": future_dates,
             "predictions": predictions.tolist(),
             "upper_bound": (predictions + confidence_interval).tolist(),
             "lower_bound": (predictions - confidence_interval).tolist(),
-            "last_actual": float(hist['Close'].iloc[-1]),
-            "last_actual_date": hist.index[-1].strftime("%Y-%m-%d")
+            "last_actual": float(last_actual),
+            "last_actual_date": last_actual_date
         }
-
-        # Cache the results
         set_cached_data('history', cache_key, prediction_data)
-
         return prediction_data
-
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        print(f"Error in /predict for {symbol}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed for {symbol}: {str(e)}") 
